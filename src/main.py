@@ -5,6 +5,7 @@ from aes_middleware import AESMiddleware
 from tls_ssl_middleware import TLSSSLMiddleware
 from token_middleware import TokenMiddleware
 from api_keys_middleware import ApiKeysMiddleware
+import base64
 
 app = Flask(__name__)
 
@@ -47,7 +48,7 @@ class CentralMiddleware:
             AESdevice = AESMiddleware(data.get("password")) #TODO necessario implementar teste se a password não esta presente
             print("Debug: Linha 48 Main, teste retorno AESMDW")
             print(AESdevice.key)
-            device_info["key"] = AESdevice.key.decode("utf-8")
+            device_info["key"] = AESdevice.key.decode()
             print(device_info)
         elif data.get("method") == "ecdhe":
             ECDHEDevice = ECDHEMiddleware()
@@ -66,11 +67,42 @@ class CentralMiddleware:
 
         return json.dumps({"success": f"Device {data.get('device_id')} registered with {data.get('method')} method.", "device": device_info})
 
-    def handle_event(self, device_id, encrypted_data):
-        if device_id in self.devices:
-            decrypted_data = self.devices[device_id].decrypt_data(encrypted_data)
-            # Processar os dados descriptografados
-            return f"Received decrypted data from device {device_id}: {decrypted_data}"
+    def handle_event(self, data):
+        config_file_path = f"devices/{data.get('device_id')}_config.json"
+        if os.path.exists(config_file_path):
+            with open(config_file_path, "r") as config_file: #TODO implementar try catch
+                device_info = json.load(config_file)
+
+            if device_info["method"] == "aes":
+                AESdevice = AESMiddleware.from_default()
+                print("DEBUG MAIN KEY")
+                print(device_info["key"])
+                AESdevice.key=base64.urlsafe_b64decode(device_info["key"].encode())
+                print("DEBUG MAIN KEY decoded")
+                print(AESdevice.key)
+                decrypted_data = AESdevice.decrypt(data.get("encrypted_data").encode("utf-8"))  # Substitua pelo método de descriptografia correto da classe AESMiddleware
+
+                print(decrypted_data)
+
+                return decrypted_data ##Envio Kafka
+                # Processar os dados descriptografados
+                # ...
+
+                return f"Received decrypted data from device {device_id}: {decrypted_data}"
+            elif device_info["method"] == "ecdhe":
+                # Lógica para ECDHEMiddleware
+                pass
+            elif device_info["method"] == "tls_ssl":
+                # Lógica para TLSSSLMiddleware
+                pass
+            elif device_info["method"] == "token":
+                # Lógica para TokenMiddleware
+                pass
+            elif device_info["method"] == "api_keys":
+                # Lógica para ApiKeysMiddleware
+                pass
+            else:
+                return f"Method {device_info['method']} is not supported."
         else:
             return f"Device {device_id} is not registered."
 
@@ -85,9 +117,7 @@ def register_device():
 @app.route("/event", methods=["POST"])
 def handle_event():
     data = request.json
-    device_id = data.get("device_id")
-    encrypted_data = data.get("encrypted_data")
-    response = central_middleware.handle_event(device_id, encrypted_data)
+    response = central_middleware.handle_event(data)
     return jsonify({"response": response})
 
 if __name__ == "__main__":
