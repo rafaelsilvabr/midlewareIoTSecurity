@@ -1,5 +1,5 @@
 import json
-from kafka_ssl_producer import KafkaSSLProducer
+#from kafka_ssl_producer import KafkaSSLProducer
 import ssl
 
 class TLSSSLMiddleware:

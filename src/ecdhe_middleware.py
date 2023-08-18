@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from kafka_ssl_producer import KafkaSSLProducer
+#from kafka_ssl_producer import KafkaSSLProducer
 
 class ECDHEMiddleware:
     def __init__(self, private_key_data):

@@ -1,5 +1,5 @@
 import json
-from kafka_ssl_producer import KafkaSSLProducer
+#from kafka_ssl_producer import KafkaSSLProducer
 
 class TokenMiddleware:
     def __init__(self, token_secret):
