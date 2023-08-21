@@ -51,7 +51,15 @@ class CentralMiddleware:
             device_info["key"] = AESdevice.key.decode()
             print(device_info)
         elif data.get("method") == "ecdhe":
-            ECDHEDevice = ECDHEMiddleware()
+            # Ler os dados do arquivo JSON
+            with open("keys.json", "r") as arquivo_json:
+                keys = json.load(arquivo_json)
+            shared_key_a = base64.b64decode(keys["shared_key"])
+            encryption_key = kdf.derive(shared_key_a)
+            ECDHEdevice = ECDHEMiddleware(shared_key_a)
+            print("Debug: Linha 48 Main, teste retorno ECDHEMDW")
+            print(ECDHEdevice.key)
+            device_info["key"] = ECDHEdevice.key.decode()
         elif data.get("method") == "tls_ssl":
             TLSSSLDevice = TLSSSLMiddleware()
         elif data.get("method") == "token":
@@ -90,8 +98,21 @@ class CentralMiddleware:
 
                 return f"Received decrypted data from device {device_id}: {decrypted_data}"
             elif device_info["method"] == "ecdhe":
-                # Lógica para ECDHEMiddleware
-                pass
+                ECDHEdevice = ECDHEMiddleware.from_default()
+                print("DEBUG MAIN KEY")
+                print(device_info["key"])
+                ECDHEdevice.key=base64.urlsafe_b64decode(device_info["key"].encode())
+                print("DEBUG MAIN KEY decoded")
+                print(ECDHEdevice.key)
+                decrypted_data = ECDHEdevice.decrypt(data.get("encrypted_data").encode("utf-8")) 
+
+                print(decrypted_data)
+
+                return decrypted_data ##Envio Kafka
+                # Processar os dados descriptografados
+                # ...
+
+                return f"Received decrypted data from device {device_id}: {decrypted_data}"
             elif device_info["method"] == "tls_ssl":
                 # Lógica para TLSSSLMiddleware
                 pass
