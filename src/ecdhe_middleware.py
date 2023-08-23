@@ -7,20 +7,22 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import base64
 
 class ECDHEMiddleware:
-    def __init__(self, password):
-        self.password = password
+    def __init__(self, key):
+        self.password = key
         self.key = self.generate_key()
     @classmethod
     def from_default(cls):
-        return cls("null")
+        return cls(None)
 
     def generate_key(self):
-        password_bytes = self.password.encode()
-        salt = b'\x85e^\xb4\xbc\\\x16\x03\xcf\x94Ou\x18\x03\xd7\x98'
+        password_bytes = self.password
+        if password_bytes==None:
+            return None
+        self.salt = b'\x85e^\xb4\xbc\\\x16\x03\xcf\x94Ou\x18\x03\xd7\x98'
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             iterations=100000,
-            salt=salt,
+            salt=self.salt,
             length=32,
             backend=default_backend()
         )
@@ -40,7 +42,7 @@ class ECDHEMiddleware:
 
         encrypted_data = {
             "ciphertext": base64.b64encode(ciphertext).decode("utf-8"),
-            "salt": base64.b64encode(salt).decode("utf-8"),
+            "salt": base64.b64encode(self.salt).decode("utf-8"),
             "iterations": 100000
         }
 
@@ -68,7 +70,9 @@ class ECDHEMiddleware:
         unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
         decrypted_message_bytes = unpadder.update(decrypted_padded_message) + unpadder.finalize()
 
-        # Decodificar os bytes da mensagem para string
-        decrypted_message = decrypted_message_bytes.decode("utf-8")
+        print (decrypted_message_bytes)
 
-        return decrypted_message
+        # Decodificar os bytes da mensagem para string
+        #decrypted_message = decrypted_message_bytes.decode("utf-8")
+
+        return decrypted_message_bytes

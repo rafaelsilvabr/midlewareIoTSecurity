@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import base64
 import os
+import sys
 
 def encrypt_AES(message, key):
     backend = default_backend()
@@ -22,11 +23,11 @@ def encrypt_AES(message, key):
     return iv + ciphertext
 
 # Chave AES em formato Base64URL (44 caracteres)
-base64_url_key = "aRnEFjIiYerS3FOFIUn-kHbHAy-vUfXIDlMXJUg54V4="
+message = sys.argv[1]
+base64_url_key = sys.argv[2]
 key_bytes = base64.urlsafe_b64decode(base64_url_key)  # Decodifica Base64URL para bytes
 
 # Mensagem a ser encriptada
-message = "Esta é uma mensagem secreta!"
 
 # Encriptar a mensagem
 encrypted_message = encrypt_AES(message, key_bytes)
